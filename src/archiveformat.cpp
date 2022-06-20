@@ -1,10 +1,6 @@
 #include "archiveformat.h"
 
-#include "Windows.h"
-
 #include <QHash>
-
-#include "7-zip/CPP/7zip/IStream.h"
 
 namespace SevenZipper {
 
@@ -111,7 +107,7 @@ unsigned char detectFromFile(const QString &archivePath)
                 { QStringLiteral("cramfs"),   CramFS },
                 { QStringLiteral("deb"),      Deb },
                 { QStringLiteral("dmg"),      Dmg },
-                { QStringLiteral("dl"),      Pe },
+                { QStringLiteral("dl"),       Pe },
                 { QStringLiteral("dylib"),    Macho },
                 { QStringLiteral("exe"),      Pe },
                 { QStringLiteral("ext"),      Ext },
@@ -138,6 +134,7 @@ unsigned char detectFromFile(const QString &archivePath)
                 { QStringLiteral("qcow"),     QCow },
                 { QStringLiteral("qcow2"),    QCow },
                 { QStringLiteral("qcow2c"),   QCow },
+                { QStringLiteral("rar"),      Rar },
                 { QStringLiteral("rpm"),      Rpm },
                 { QStringLiteral("squashfs"), SquashFS },
                 { QStringLiteral("te"),       TE },
@@ -175,11 +172,18 @@ unsigned char detectFromFile(const QString &archivePath)
     }
 
     // Detecting multivolume archives extension
-    if ((extension.at(0) == QLatin1Char('r') || extension.at(0) == QLatin1Char('z')) &&
-        (extension.size() == 3 && extension.at(1).isDigit() && extension.at(2).isDigit()))
+    // Extension follows the format zXX or rXX, where X is a number in range [0-9]
+    if (extension.size() == 3 && extension.at(1).isDigit() && extension.at(2).isDigit())
     {
-        // Extension follows the format zXX or rXX, where X is a number in range [0-9]
-        return extension.at(0) == QLatin1Char('r') ? Rar : Zip;
+        if (extension.at(0) == QLatin1Char('r'))
+        {
+            return Rar;
+        }
+
+        if (extension.at(0) == QLatin1Char('z'))
+        {
+            return Zip;
+        }
     }
 
     // Note: iso, img and ima extensions can be associated with different formats -> detect by signature
